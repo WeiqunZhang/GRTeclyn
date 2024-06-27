@@ -81,6 +81,36 @@ void BinaryBHLevel::initData()
                            binary.init_data(i, j, k, cell);
                        });
 #endif
+
+    if (level == 0 /* && use_twopunctures */) {
+        { // Disable particle tiling because we don't have many particles.
+            amrex::ParmParse pp("particles");
+            pp.add("do_tiling", 0);
+        }
+
+        m_puncture_tracker = std::make_unique<PunctureTrackerParticles>
+            ((amrex::ParGDBBase*)parent->GetParGDB());
+        for (amrex::MFIter mfi = m_puncture_tracker->MakeMFIter(level);
+             mfi.isValid(); ++mfi)
+        {
+            auto& ptile = m_puncture_tracker->DefineAndReturnParticleTile
+                (level, mfi.index(), mfi.LocalTileIndex());
+            if (mfi.index() == 0 && mfi.LocalTileIndex() == 0) {
+                // Put particles on level 0, Box 0, tile 0
+                int const npunctures = 2;
+                ptile.resize(npunctures);
+                auto const& ptd = ptile.getParticleTileData();
+                amrex::ParallelFor(npunctures, [=] AMREX_GPU_DEVICE (int ip)
+                {
+                    for (int idim = 0; idim < 3; ++idim) {
+                        ptd.pos(idim, ip) = 0.5 + amrex::Real(ip); // xxxxx
+                    }
+                });
+            }
+        }
+        // bcast the positions so that regrid can use them
+        // Or mabye every processes already know them
+    }
 }
 
 // Calculate RHS during RK4 substeps
@@ -264,6 +294,18 @@ void BinaryBHLevel::specificPostTimeStep()
                                                      m_dt, write_punctures);
     }
 #endif
+
+    if (m_puncture_tracker) {
+        int min_level = 5; // xxxxx particles
+        if (Level() == min_level) {
+            m_puncture_tracker->Redistribute();
+            // Particles are now associated with grids.
+            amrex::MultiFab &S_finest = parent->getLevel(parent->finestLevel()).get_new_data(State_Type);
+            S_finest.FillBoundary(); // xxxxx maybe only the components we need? Are there ever periodic boundaries?
+            // move particles.
+            // Bcast the positions so that regrid can use them
+        }
+    }
 }
 
 #ifdef AMREX_USE_HDF5

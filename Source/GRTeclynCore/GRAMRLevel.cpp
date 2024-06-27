@@ -8,6 +8,8 @@
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 amrex::Vector<std::string> GRAMRLevel::plot_constraints;
 
+std::unique_ptr<PunctureTrackerParticles> GRAMRLevel::m_puncture_tracker;
+
 struct GRAMRBCFill
 {
     AMREX_GPU_DEVICE
@@ -152,6 +154,7 @@ void GRAMRLevel::variableCleanUp()
 {
     desc_lst.clear();
     derive_lst.clear();
+    m_puncture_tracker.reset();
 }
 
 GRAMRLevel::GRAMRLevel() = default;
@@ -353,3 +356,5 @@ void GRAMRLevel::writePlotFilePost(const std::string & /*dir*/,
 {
     m_is_writing_plotfile = false;
 }
+
+// xxxxx particles i/o

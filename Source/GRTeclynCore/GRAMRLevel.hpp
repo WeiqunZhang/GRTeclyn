@@ -14,6 +14,7 @@
 #include "UserVariables.hpp" // need NUM_VARS
 
 #include <AMReX_AmrLevel.H>
+#include <AMReX_Particles.H>
 
 #include <fstream>
 #include <limits>
@@ -24,6 +25,8 @@ enum StateType
     State_Type = 0,
     NUM_STATE_TYPE
 };
+
+using PunctureTrackerParticles = amrex::ParticleContainerPureSoA<0,0>;
 
 // NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 class GRAMRLevel : public amrex::AmrLevel
@@ -148,6 +151,8 @@ class GRAMRLevel : public amrex::AmrLevel
 
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
     static amrex::Vector<std::string> plot_constraints;
+
+    static std::unique_ptr<PunctureTrackerParticles> m_puncture_tracker;
 
   private:
 
