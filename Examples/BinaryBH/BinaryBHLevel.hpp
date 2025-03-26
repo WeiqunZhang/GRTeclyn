@@ -42,6 +42,10 @@ class BinaryBHLevel : public GRAMRLevel
     /// Tag cells for regridding
     void tag_cells(amrex::TagBoxArray &a_tag_box_array,
                    amrex::Real a_regrid_threshold) final;
+
+private:
+
+    amrex::Gpu::DeviceVector<CCZ4RHS<MovingPunctureGauge, FourthOrderDerivatives>> m_ccz4rhs;
 };
 
 #endif /* BINARYBHLEVEL_HPP_ */
